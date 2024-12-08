@@ -1,47 +1,47 @@
-import os
-import requests
 import gradio as gr
-from openai import OpenAI
-import anthropic
-import google.generativeai
+from src.analyzer import stream_brochure
+import os
+from dotenv import load_dotenv
 
-# Load environment variables
+
+# Load environment variables from .env file
 load_dotenv()
+
+# Get API keys from environment variables
 openai_api_key = os.getenv('OPENAI_API_KEY')
 anthropic_api_key = os.getenv('ANTHROPIC_API_KEY')
 google_api_key = os.getenv('GOOGLE_API_KEY')
 
-# Connect to AI models
-openai = OpenAI()
-claude = anthropic.Anthropic()
-google.generativeai.configure()
+# Check if keys are loaded correctly
+if openai_api_key:
+    print(f"OpenAI API Key exists and begins {openai_api_key[:8]}")
+else:
+    print("OpenAI API Key not set")
 
-# Import the Website class from the website.py file
-from src.website import Website
+if anthropic_api_key:
+    print(f"Anthropic API Key exists and begins {anthropic_api_key[:7]}")
+else:
+    print("Anthropic API Key not set")
 
-def stream_brochure(company_name, url, model):
-    prompt = f"Please generate a company brochure for {company_name}. Here is their landing page:\n"
-    prompt += Website(url).get_contents()
-    
-    if model == "GPT":
-        result = stream_gpt(prompt)
-    elif model == "Claude":
-        result = stream_claude(prompt)
-    else:
-        raise ValueError("Unknown model")
-    
-    yield from result
+if google_api_key:
+    print(f"Google API Key exists and begins {google_api_key[:8]}")
+else:
+    print("Google API Key not set")
 
-# Gradio interface definition
-view = gr.Interface(
-    fn=stream_brochure,
-    inputs=[
-        gr.Textbox(label="Company name:"),
-        gr.Textbox(label="Landing page URL including http:// or https://"),
-        gr.Dropdown(["GPT", "Claude"], label="Select model")
-    ],
-    outputs=[gr.Markdown(label="Brochure:")],
-    flagging_mode="never"
-)
+# Set up the Gradio interface for user input
+def create_interface():
+    return gr.Interface(
+        fn=stream_brochure,
+        inputs=[
+            gr.Textbox(label="Company name:"),
+            gr.Textbox(label="Landing page URL including http:// or https://"),
+            gr.Dropdown(["GPT", "Claude"], label="Select model")
+        ],
+        outputs=[gr.Markdown(label="Brochure:")],
+        flagging_mode="never"
+    )
 
-view.launch(share=True)
+# Launch the interface
+if __name__ == "__main__":
+    interface = create_interface()
+    interface.launch(share=True)

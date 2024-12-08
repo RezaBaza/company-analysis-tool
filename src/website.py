@@ -2,19 +2,21 @@ import requests
 from bs4 import BeautifulSoup
 
 class Website:
-    url: str
-    title: str
-    text: str
-    
     def __init__(self, url):
         self.url = url
-        response = requests.get(url)
-        self.body = response.content
-        soup = BeautifulSoup(self.body, 'html.parser')
-        self.title = soup.title.string if soup.title else "No title found"
+        self.body = self.scrape_website()
+
+    def scrape_website(self):
+        response = requests.get(self.url)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Extract relevant content from the webpage, removing irrelevant elements
         for irrelevant in soup.body(["script", "style", "img", "input"]):
             irrelevant.decompose()
-        self.text = soup.body.get_text(separator="\n", strip=True)
-    
+
+        return soup
+
     def get_contents(self):
-        return f"Webpage Title:\n{self.title}\nWebpage Contents:\n{self.text}\n\n"
+        title = self.scrape_website().title.string if self.scrape_website().title else "No title found"
+        text = self.scrape_website().body.get_text(separator="\n", strip=True)
+        return f"Webpage Title:\n{title}\nWebpage Contents:\n{text}\n\n"
